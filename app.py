@@ -11,7 +11,7 @@ st.set_page_config(page_title="Strava Summary") #, layout="wide"
 st.title("🏃‍♀️ Strava Activity Summary Dashboard")
 
 # 📁 Load the CSV
-file_path = r'C:\Users\zablo\strefa_poza_onedrive\Projects\my_portfolio\strava\data\sample.csv'
+file_path = r'C:\Users\zablo\strefa_poza_onedrive\Projects\my_portfolio\strava\STRAVA\sample.csv'
 
 try:
     df = pd.read_csv(file_path)
@@ -176,3 +176,5 @@ st.dataframe(
     }),
     use_container_width=True
 )
+
+st.write('THE END')
