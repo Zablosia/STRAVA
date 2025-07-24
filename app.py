@@ -16,9 +16,9 @@ st.title("🏃‍♀️ Strava Activity Summary Dashboard")
 
 
 try:
-    df = pd.read_csv('STRAVA/sample.csv') #df = pd.read_csv(file_path)
+    df = pd.read_csv('sample.csv') #df = pd.read_csv(file_path)
 except FileNotFoundError:
-    st.error(f"File not found: {'STRAVA/sample.csv'}")
+    st.error(f"File not found: {'sample.csv'}")
     st.stop()
 
 
