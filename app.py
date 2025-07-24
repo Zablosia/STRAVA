@@ -11,14 +11,14 @@ st.set_page_config(page_title="Strava Summary") #, layout="wide"
 st.title("🏃‍♀️ Strava Activity Summary Dashboard")
 
 # 📁 Load the CSV
-file_path = r'C:\Users\zablo\strefa_poza_onedrive\Projects\my_portfolio\strava\STRAVA\sample.csv'
+#file_path = r'C:\Users\zablo\strefa_poza_onedrive\Projects\my_portfolio\strava\STRAVA\sample.csv'
 
 
 
 try:
     df = pd.read_csv('STRAVA/sample.csv') #df = pd.read_csv(file_path)
 except FileNotFoundError:
-    st.error(f"File not found: {file_path}")
+    st.error(f"File not found: {'STRAVA/sample.csv'}")
     st.stop()
 
 
