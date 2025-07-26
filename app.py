@@ -5,18 +5,19 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import requests
 
 
 st.set_page_config(page_title="Strava Summary") #, layout="wide"
 st.title("🏃‍♀️ Strava Activity Summary Dashboard")
 
 # 📁 Load the CSV
-#file_path = r'C:\Users\zablo\strefa_poza_onedrive\Projects\my_portfolio\strava\STRAVA\sample.csv'
+file_path = r'C:\Users\zablo\strefa_poza_onedrive\Projects\my_portfolio\strava\STRAVA\sample.csv'
 
 
 
 try:
-    df = pd.read_csv('sample.csv') #df = pd.read_csv(file_path)
+    df = pd.read_csv(file_path) #pd.read_csv('STRAVA\sample.csv')
 except FileNotFoundError:
     st.error(f"File not found: {'sample.csv'}")
     st.stop()
@@ -73,8 +74,6 @@ st.subheader("📊 Overview by Sport & Year")
 st.dataframe(summary)
 
 
-
-
 st.set_page_config(page_title="Strava Explorer", layout="wide") #
 st.title("🚴 Strava Top Activities Explorer")
 
@@ -107,6 +106,8 @@ start_date, end_date = st.sidebar.date_input(
     min_value=min_date,
     max_value=max_date
 )
+
+
 
 # Handle both single and tuple case
 if isinstance(start_date, datetime.date) and isinstance(end_date, datetime.date):
@@ -180,3 +181,102 @@ st.dataframe(
 )
 
 st.write('THE END')
+
+# === Funkcja do odświeżania tokena dostępowego ===
+def refresh_access_token(client_id, client_secret, refresh_token):
+    response = requests.post(
+        url="https://www.strava.com/oauth/token",
+        data={
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'grant_type': 'refresh_token',
+            'refresh_token': refresh_token
+        }
+    )
+    return response.json()['access_token']
+
+# ---- CONFIG ----
+CLIENT_ID = '169100'
+CLIENT_SECRET = 'fe0aa78460770e9d5fec67f94365ead6e603d68f'
+REFRESH_TOKEN = '60565a46079e4ded709ce74e799e9290751b4c88'
+access_token = refresh_access_token(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN)
+ACCESS_TOKEN = access_token
+
+HEADERS = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
+BOUNDS = "1.2124,103.6020,1.4807,104.0130"  # Singapore
+
+# ---- API CALL ----
+@st.cache_data
+def get_starred_segments():
+    url = "https://www.strava.com/api/v3/segments/starred"
+    response = requests.get(url, headers=HEADERS)
+    if response.status_code == 200:
+        return response.json()  # returns a list of segments
+    else:
+        st.error(f"Failed to load starred segments: {response.status_code}")
+        return []
+
+# ---- UI ----
+st.title("⭐ My Starred Strava Segments")
+
+segments = get_starred_segments()
+
+if segments:
+    # Create dropdown list: segment name + distance
+    options = [f"{s['name']} ({int(s['distance'])} m)" for s in segments]
+    selected = st.selectbox("Choose a segment:", options)
+
+    index = options.index(selected)
+    segment = segments[index]
+
+    st.subheader("Segment Details")
+    st.write(f"**Name:** {segment['name']}")
+    st.write(f"**Distance:** {int(segment['distance'])} m")
+    st.write(f"**Average Grade:** {segment['average_grade']}%")
+    #st.write(f"**Elevation Gain:** {segment['total_elevation_gain']} m")
+    st.write(f"**Climb Category:** {segment['climb_category']}")
+    st.write(f"**City/State:** {segment.get('city', 'N/A')} / {segment.get('state', 'N/A')}")
+    st.write(f"**Segment ID:** {segment['id']}")
+else:
+    st.warning("No starred segments found. Go to Strava and star a few segments first.")
+
+
+
+    # --- API CALL ---
+@st.cache_data
+def get_segment_efforts(segment_id):
+    url = f"https://www.strava.com/api/v3/segment_efforts"
+    params = {
+        "segment_id": segment_id
+    }
+    response = requests.get(url, headers=HEADERS, params=params)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error(f"Failed to fetch efforts: {response.status_code} - {response.text}")
+        return []
+
+# --- UI ---
+st.title("🔁 My Past Efforts on a Segment")
+
+segment_id_input = st.text_input("Enter Segment ID:", "")
+
+if segment_id_input:
+    try:
+        segment_id = int(segment_id_input)
+        efforts = get_segment_efforts(segment_id)
+
+        if efforts:
+            st.success(f"Found {len(efforts)} effort(s).")
+            for effort in efforts:
+                st.markdown(f"""
+                    - 📅 Date: **{effort['start_date_local']}**
+                    - ⏱️ Elapsed Time: **{effort['elapsed_time']} sec**
+                    - 🚴‍♀️ Activity ID: [{effort['activity']['id']}](https://www.strava.com/activities/{effort['activity']['id']})
+                    - 🔗 Segment Effort ID: {effort['id']}
+                    ---
+                """)
+        else:
+            st.warning("No past efforts found on this segment.")
+    except ValueError:
+        st.error("Please enter a valid segment ID (number).")
