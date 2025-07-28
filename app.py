@@ -1,7 +1,3 @@
-
-
-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -11,14 +7,17 @@ import requests
 from datetime import datetime, timedelta
 
 # -------------------- CONFIG --------------------
-CLIENT_ID = '169100'
-CLIENT_SECRET = 'fe0aa78460770e9d5fec67f94365ead6e603d68f'
-REFRESH_TOKEN = '60565a46079e4ded709ce74e799e9290751b4c88'
+# Read from secrets
+CLIENT_ID = st.secrets["STRAVA"]["client_id"]
+CLIENT_SECRET = st.secrets["STRAVA"]["client_secret"]
+REFRESH_TOKEN = st.secrets["STRAVA"]["refresh_token"]
+##
+
 TOKEN_URL = "https://www.strava.com/oauth/token"
 ACTIVITIES_URL = "https://www.strava.com/api/v3/athlete/activities"
 
 # -------------------- HELPER FUNCTIONS --------------------
-# -------------------- HELPER FUNCTIONS --------------------
+
 def get_strava_activities():
     # Refresh access token
     response = requests.post(TOKEN_URL, data={
